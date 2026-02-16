@@ -90,7 +90,7 @@
 
     /* ---- Typography ---- */
     .section-label {
-      font-size: 0.85rem;
+      font-size: 1rem;
       font-weight: 600;
       letter-spacing: 0.15em;
       text-transform: uppercase;
@@ -98,24 +98,50 @@
       margin-bottom: 8px;
     }
     .section-title {
-      font-size: 2.2rem;
-      font-weight: 300;
+      font-size: 2.6rem;
+      font-weight: 400;
       letter-spacing: 0.05em;
       margin-bottom: 8px;
     }
     .section-date {
-      font-size: 1rem;
+      font-size: 1.15rem;
       font-weight: 600;
       color: #df0985;
       margin-bottom: 20px;
     }
     .section-body {
-      font-size: 1.05rem;
-      font-weight: 300;
+      font-size: 1.2rem;
+      font-weight: 400;
       line-height: 1.7;
       color: rgba(255,255,255,0.88);
     }
     .section-body p { margin-bottom: 16px; }
+
+    /* ---- Ticket button ---- */
+    .btn-tickets {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 2;
+      display: inline-block;
+      padding: 12px 32px;
+      background: #df0985;
+      color: #ffffff;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      border-radius: 8px;
+      text-decoration: none;
+      pointer-events: auto;
+      transition: background 0.2s ease;
+    }
+    .btn-tickets:hover,
+    .btn-tickets:active,
+    .btn-tickets:visited {
+      background: #e83da3;
+      text-decoration: none !important;
+    }
 
     /* ---- Mystery box ---- */
     .mystery-box {
@@ -126,7 +152,7 @@
       height: 100px;
       border: 3px solid #f5a623;
       border-radius: 16px;
-      font-size: 3rem;
+      font-size: 3.4rem;
       font-weight: 700;
       color: #f5a623;
       margin: 16px 0;
@@ -134,7 +160,7 @@
 
     /* ---- Artist cards ---- */
     .artist-group-title {
-      font-size: 0.8rem;
+      font-size: 0.95rem;
       font-weight: 600;
       letter-spacing: 0.15em;
       text-transform: uppercase;
@@ -142,26 +168,26 @@
       margin: 32px 0 16px;
     }
     .artist-card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(58,0,168,0.85);
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       padding: 24px;
       margin-bottom: 16px;
       pointer-events: auto;
     }
     .artist-card h3 {
-      font-size: 1.2rem;
+      font-size: 1.35rem;
       font-weight: 600;
       margin-bottom: 4px;
     }
     .artist-card .artist-role {
-      font-size: 0.85rem;
+      font-size: 1rem;
       color: #df0985;
       font-weight: 600;
       margin-bottom: 12px;
     }
     .artist-card .artist-bio {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       font-weight: 300;
       line-height: 1.6;
       color: rgba(255,255,255,0.78);
@@ -169,25 +195,25 @@
     .artist-card .artist-link {
       display: inline-block;
       margin-top: 10px;
-      font-size: 0.85rem;
+      font-size: 1rem;
     }
 
     /* ---- Ensemble card ---- */
     .ensemble-card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(58,0,168,0.85);
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       padding: 24px;
       margin-bottom: 16px;
       pointer-events: auto;
     }
     .ensemble-card h3 {
-      font-size: 1.3rem;
+      font-size: 1.45rem;
       font-weight: 600;
       margin-bottom: 12px;
     }
     .ensemble-card .ensemble-bio {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       font-weight: 300;
       line-height: 1.6;
       color: rgba(255,255,255,0.78);
@@ -202,7 +228,7 @@
       .ensemble-members { grid-template-columns: 1fr; }
     }
     .member {
-      font-size: 0.9rem;
+      font-size: 1rem;
       line-height: 1.5;
     }
     .member strong { font-weight: 600; }
@@ -213,18 +239,18 @@
       text-align: center;
       padding: 24px 0;
       color: rgba(255,255,255,0.3);
-      font-size: 1.5rem;
+      font-size: 1.7rem;
     }
 
     /* ---- Part 3 teaser ---- */
     .teaser-title {
-      font-size: 2.2rem;
-      font-weight: 300;
+      font-size: 2.6rem;
+      font-weight: 400;
       letter-spacing: 0.05em;
       margin-bottom: 8px;
     }
     .teaser-subtitle {
-      font-size: 1.1rem;
+      font-size: 1.25rem;
       color: #f5a623;
       font-weight: 600;
       font-style: italic;
@@ -245,6 +271,7 @@
 <body>
 <canvas id="canvas"></canvas>
 <img id="sponsors" src="img/sponsors.png" alt="Theatre 1308 &amp; Calgary Arts Development">
+<a class="btn-tickets" href="https://www.showpass.com/ce2/">Buy Tickets</a>
 <div id="content">
 
   <!-- ======== HERO ======== -->
