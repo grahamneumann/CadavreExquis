@@ -392,16 +392,14 @@
 <script>
 // ===== CONFIGURATION =====
 const CONFIG = {
-  minShapes: 2,             // Minimum shapes on screen at any time
-  maxShapes: 4,             // Maximum shapes on screen at any time
+  targetShapes: 3,          // Desired number of visible shapes on screen
+  maxShapes: 5,             // Maximum total shapes (including ones entering from edges)
   shapeScale: 0.5,          // Scale factor for shape images (1 = original size)
   minSpeed: 15,             // Minimum shape speed (pixels/sec)
   maxSpeed: 40,             // Maximum shape speed (pixels/sec)
   minRotation: 0.1,         // Minimum rotation speed (rad/sec)
   maxRotation: 0.5,         // Maximum rotation speed (rad/sec)
   overlapColor: '#df0985',  // Color for overlapping regions
-  parallaxFactor: 0.3,      // Background scrolls at this fraction of page scroll (0 = fixed, 1 = no parallax)
-  spawnMargin: 0.25,        // Spawn a new shape when any existing shape is this fraction from exiting
 };
 // =========================
 
@@ -440,12 +438,10 @@ resize();
 
 // ---- Scroll tracking ----
 
-let scrollY = 0;
 const sponsorsImg = document.getElementById('sponsors');
 window.addEventListener('scroll', () => {
-  scrollY = window.scrollY;
   // Fade out sponsors logo as user scrolls down (fully hidden by 200px)
-  const fade = Math.max(1 - scrollY / 200, 0);
+  const fade = Math.max(1 - window.scrollY / 200, 0);
   sponsorsImg.style.opacity = fade;
 });
 
@@ -525,14 +521,15 @@ class Shape {
     );
   }
 
-  // Check if shape is near the edge and heading outward (about to leave)
-  isNearExit(cw, ch, threshold) {
+  // Check if shape is fully visible on screen
+  isOnScreen(cw, ch) {
     const margin = this.halfDiag;
-    if (this.x < margin * threshold && this.vx < 0) return true;
-    if (this.x > cw - margin * threshold && this.vx > 0) return true;
-    if (this.y < margin * threshold && this.vy < 0) return true;
-    if (this.y > ch - margin * threshold && this.vy > 0) return true;
-    return false;
+    return (
+      this.x > margin &&
+      this.x < cw - margin &&
+      this.y > margin &&
+      this.y < ch - margin
+    );
   }
 
   // Axis-aligned bounding box in canvas coordinates (accounts for rotation)
@@ -681,36 +678,26 @@ async function main() {
       s.update(dt);
     }
 
-    // Remove off-screen shapes and proactively spawn replacements
+    // Remove off-screen shapes
     for (let i = shapes.length - 1; i >= 0; i--) {
       if (shapes[i].isOffScreen(cw, ch)) {
         shapes.splice(i, 1);
       }
     }
 
-    // Always maintain at least minShapes
-    while (shapes.length < CONFIG.minShapes) {
-      shapes.push(spawnShape());
-    }
+    // Count shapes that are fully visible on screen
+    const visibleCount = shapes.filter(s => s.isOnScreen(cw, ch)).length;
 
-    // Proactively spawn a new shape when any shape is near the exit,
-    // but don't exceed maxShapes
-    if (shapes.length < CONFIG.maxShapes) {
-      const anyNearExit = shapes.some(s => s.isNearExit(cw, ch, CONFIG.spawnMargin));
-      if (anyNearExit) {
-        shapes.push(spawnShape());
-      }
+    // Spawn new shapes until we have enough visible (or in-transit) to reach target
+    if (visibleCount < CONFIG.targetShapes && shapes.length < CONFIG.maxShapes) {
+      shapes.push(spawnShape());
     }
 
     // ---- Render ----
 
-    // 1. Tiled background (with parallax offset)
-    const parallaxOffset = scrollY * CONFIG.parallaxFactor;
-    ctx.save();
-    ctx.translate(0, -parallaxOffset);
+    // 1. Background fill
     ctx.fillStyle = bgPattern;
-    ctx.fillRect(-1, 0, cw + 2, ch + parallaxOffset + 1);
-    ctx.restore();
+    ctx.fillRect(0, 0, cw, ch);
 
     // 2. Draw all shapes
     for (const s of shapes) {
