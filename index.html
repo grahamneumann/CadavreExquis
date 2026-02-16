@@ -392,7 +392,8 @@
 <script>
 // ===== CONFIGURATION =====
 const CONFIG = {
-  shapeCount: 3,            // Number of shapes on screen at any time
+  minShapes: 2,             // Minimum shapes on screen at any time
+  maxShapes: 4,             // Maximum shapes on screen at any time
   shapeScale: 0.5,          // Scale factor for shape images (1 = original size)
   minSpeed: 15,             // Minimum shape speed (pixels/sec)
   maxSpeed: 40,             // Maximum shape speed (pixels/sec)
@@ -400,6 +401,7 @@ const CONFIG = {
   maxRotation: 0.5,         // Maximum rotation speed (rad/sec)
   overlapColor: '#df0985',  // Color for overlapping regions
   parallaxFactor: 0.3,      // Background scrolls at this fraction of page scroll (0 = fixed, 1 = no parallax)
+  spawnMargin: 0.25,        // Spawn a new shape when any existing shape is this fraction from exiting
 };
 // =========================
 
@@ -523,6 +525,16 @@ class Shape {
     );
   }
 
+  // Check if shape is near the edge and heading outward (about to leave)
+  isNearExit(cw, ch, threshold) {
+    const margin = this.halfDiag;
+    if (this.x < margin * threshold && this.vx < 0) return true;
+    if (this.x > cw - margin * threshold && this.vx > 0) return true;
+    if (this.y < margin * threshold && this.vy < 0) return true;
+    if (this.y > ch - margin * threshold && this.vy > 0) return true;
+    return false;
+  }
+
   // Axis-aligned bounding box in canvas coordinates (accounts for rotation)
   getBBox() {
     return {
@@ -572,14 +584,14 @@ async function main() {
   // Initialize shapes
   const shapes = [];
 
-  function spawnShape() {
-    const img = shapeImgs[Math.floor(Math.random() * shapeImgs.length)];
+  function spawnShape(specificImg) {
+    const img = specificImg || shapeImgs[Math.floor(Math.random() * shapeImgs.length)];
     return new Shape(img, canvas.width, canvas.height);
   }
 
-  // Populate initial shapes — spread them across the canvas rather than all starting from edges
-  for (let i = 0; i < CONFIG.shapeCount; i++) {
-    const s = spawnShape();
+  // Populate initial shapes — one of each type, spread across the canvas
+  for (let i = 0; i < shapeImgs.length; i++) {
+    const s = spawnShape(shapeImgs[i]);
     // Place initial shapes randomly on-screen (not just at edges)
     s.x = rand(0, canvas.width);
     s.y = rand(0, canvas.height);
@@ -669,14 +681,25 @@ async function main() {
       s.update(dt);
     }
 
-    // Remove off-screen shapes and spawn replacements
+    // Remove off-screen shapes and proactively spawn replacements
     for (let i = shapes.length - 1; i >= 0; i--) {
       if (shapes[i].isOffScreen(cw, ch)) {
         shapes.splice(i, 1);
       }
     }
-    while (shapes.length < CONFIG.shapeCount) {
+
+    // Always maintain at least minShapes
+    while (shapes.length < CONFIG.minShapes) {
       shapes.push(spawnShape());
+    }
+
+    // Proactively spawn a new shape when any shape is near the exit,
+    // but don't exceed maxShapes
+    if (shapes.length < CONFIG.maxShapes) {
+      const anyNearExit = shapes.some(s => s.isNearExit(cw, ch, CONFIG.spawnMargin));
+      if (anyNearExit) {
+        shapes.push(spawnShape());
+      }
     }
 
     // ---- Render ----
