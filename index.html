@@ -421,7 +421,8 @@
 const CONFIG = {
   targetShapes: 3,          // Desired number of visible shapes on screen
   maxShapes: 5,             // Maximum total shapes (including ones entering from edges)
-  shapeScale: 0.5,          // Scale factor for shape images (1 = original size)
+  shapeScale: 0.5,          // Base scale factor for shape images (1 = original size)
+  shapeScaleVariance: 0.15, // Random size variation (±) applied to shapeScale
   minSpeed: 15,             // Minimum shape speed (pixels/sec)
   maxSpeed: 40,             // Maximum shape speed (pixels/sec)
   minRotation: 0.1,         // Minimum rotation speed (rad/sec)
@@ -466,19 +467,24 @@ resize();
 // ---- Scroll tracking ----
 
 const sponsorsImg = document.getElementById('sponsors');
+let shapeOpacity = 1;
 window.addEventListener('scroll', () => {
+  const scroll = window.scrollY;
   // Fade out sponsors logo as user scrolls down (fully hidden by 200px)
-  const fade = Math.max(1 - window.scrollY / 200, 0);
+  const fade = Math.max(1 - scroll / 200, 0);
   sponsorsImg.style.opacity = fade;
+  // Fade shapes to 50% over the same scroll distance
+  shapeOpacity = 0.5 + 0.5 * fade;
 });
 
 // ---- Shape class ----
 
 class Shape {
-  constructor(img, canvasW, canvasH) {
+  constructor(img, canvasW, canvasH, edge, onScreen) {
     this.img = img;
-    this.w = img.width * CONFIG.shapeScale;
-    this.h = img.height * CONFIG.shapeScale;
+    const scale = CONFIG.shapeScale + rand(-CONFIG.shapeScaleVariance, CONFIG.shapeScaleVariance);
+    this.w = img.width * scale;
+    this.h = img.height * scale;
     // Diagonal — the radius needed to contain the rotated image
     this.diagonal = Math.sqrt(this.w * this.w + this.h * this.h);
     this.halfDiag = this.diagonal / 2;
@@ -490,36 +496,38 @@ class Shape {
     // Random speed
     const speed = rand(CONFIG.minSpeed, CONFIG.maxSpeed);
 
-    // Pick a random edge to spawn from and a direction aimed inward
-    this._spawnFromEdge(canvasW, canvasH, speed);
+    // Spawn from a specific edge or a random one
+    this._spawnFromEdge(canvasW, canvasH, speed, edge, onScreen);
   }
 
-  _spawnFromEdge(cw, ch, speed) {
+  _spawnFromEdge(cw, ch, speed, edge, onScreen) {
     // Choose an edge: 0=top, 1=right, 2=bottom, 3=left
-    const edge = Math.floor(Math.random() * 4);
+    if (edge === undefined) edge = Math.floor(Math.random() * 4);
     const margin = this.halfDiag;
+    // Off-screen spawn by default; on-screen places center just inside the edge
+    const edgeOffset = onScreen ? margin : -margin;
 
     // Angle toward interior with some spread (±60°)
     let baseAngle;
     switch (edge) {
       case 0: // top — moving downward
-        this.x = rand(-margin, cw + margin);
-        this.y = -margin;
+        this.x = rand(margin, cw - margin);
+        this.y = onScreen ? edgeOffset : -margin;
         baseAngle = Math.PI / 2; // down
         break;
       case 1: // right — moving left
-        this.x = cw + margin;
-        this.y = rand(-margin, ch + margin);
+        this.x = onScreen ? cw - edgeOffset : cw + margin;
+        this.y = rand(margin, ch - margin);
         baseAngle = Math.PI; // left
         break;
       case 2: // bottom — moving up
-        this.x = rand(-margin, cw + margin);
-        this.y = ch + margin;
+        this.x = rand(margin, cw - margin);
+        this.y = onScreen ? ch - edgeOffset : ch + margin;
         baseAngle = -Math.PI / 2; // up
         break;
       case 3: // left — moving right
-        this.x = -margin;
-        this.y = rand(-margin, ch + margin);
+        this.x = onScreen ? edgeOffset : -margin;
+        this.y = rand(margin, ch - margin);
         baseAngle = 0; // right
         break;
     }
@@ -608,18 +616,16 @@ async function main() {
   // Initialize shapes
   const shapes = [];
 
-  function spawnShape(specificImg) {
+  function spawnShape(specificImg, edge, onScreen) {
     const img = specificImg || shapeImgs[Math.floor(Math.random() * shapeImgs.length)];
-    return new Shape(img, canvas.width, canvas.height);
+    return new Shape(img, canvas.width, canvas.height, edge, onScreen);
   }
 
-  // Populate initial shapes — one of each type, spread across the canvas
+  // Populate initial shapes — one of each type from specific edges, visible on screen
+  // Edge codes: 0=top, 1=right, 2=bottom, 3=left
+  const initialEdges = [3, 2, 1]; // left→right, bottom→up, right→left
   for (let i = 0; i < shapeImgs.length; i++) {
-    const s = spawnShape(shapeImgs[i]);
-    // Place initial shapes randomly on-screen (not just at edges)
-    s.x = rand(0, canvas.width);
-    s.y = rand(0, canvas.height);
-    shapes.push(s);
+    shapes.push(spawnShape(shapeImgs[i], initialEdges[i], true));
   }
 
   // ---- Overlap detection (GPU-accelerated via composite operations) ----
@@ -726,7 +732,8 @@ async function main() {
     ctx.fillStyle = bgPattern;
     ctx.fillRect(0, 0, cw, ch);
 
-    // 2. Draw all shapes
+    // 2. Draw all shapes (faded based on scroll)
+    ctx.globalAlpha = shapeOpacity;
     for (const s of shapes) {
       s.drawTo(ctx);
     }
@@ -734,6 +741,7 @@ async function main() {
     // 3. Compute and draw overlap mask
     computeOverlapMask();
     ctx.drawImage(overlapCanvas, 0, 0);
+    ctx.globalAlpha = 1;
 
     requestAnimationFrame(frame);
   }
