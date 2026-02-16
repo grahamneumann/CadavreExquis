@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadavre Exquis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #3a00a8; }
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    #content {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+      font-family: 'Source Sans 3', sans-serif;
+      color: #ffffff;
+    }
+    #content a { color: #f0a0d0; text-decoration: none; pointer-events: auto; }
+    #content a:hover { text-decoration: underline; }
+
+    /* ---- Hero ---- */
+    .hero {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero .title-img {
+      max-width: 80%;
+      height: auto;
+    }
+
+    /* ---- Generic section ---- */
+    .section {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+
+    /* ---- Timeline spine ---- */
+    .timeline {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 44px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255,255,255,0.25);
+    }
+    .timeline-node {
+      position: relative;
+      padding-left: 72px;
+      margin-bottom: 60px;
+    }
+    .timeline-node:last-child { margin-bottom: 0; }
+    .timeline-dot {
+      position: absolute;
+      left: 33px;
+      top: 4px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #df0985;
+      border: 3px solid #ffffff;
+    }
+    .timeline-dot.mystery {
+      background: #f5a623;
+    }
+    .timeline-dot.upcoming {
+      background: transparent;
+      border: 3px dashed rgba(255,255,255,0.5);
+    }
+
+    /* ---- Typography ---- */
+    .section-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #f5a623;
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .section-date {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #df0985;
+      margin-bottom: 20px;
+    }
+    .section-body {
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.88);
+    }
+    .section-body p { margin-bottom: 16px; }
+
+    /* ---- Mystery box ---- */
+    .mystery-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100px;
+      height: 100px;
+      border: 3px solid #f5a623;
+      border-radius: 16px;
+      font-size: 3rem;
+      font-weight: 700;
+      color: #f5a623;
+      margin: 16px 0;
+    }
+
+    /* ---- Artist cards ---- */
+    .artist-group-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin: 32px 0 16px;
+    }
+    .artist-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      pointer-events: auto;
+    }
+    .artist-card h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .artist-card .artist-role {
+      font-size: 0.85rem;
+      color: #df0985;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .artist-card .artist-bio {
+      font-size: 0.95rem;
+      font-weight: 300;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.78);
+    }
+    .artist-card .artist-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 0.85rem;
+    }
+
+    /* ---- Ensemble card ---- */
+    .ensemble-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      pointer-events: auto;
+    }
+    .ensemble-card h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .ensemble-card .ensemble-bio {
+      font-size: 0.95rem;
+      font-weight: 300;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.78);
+      margin-bottom: 16px;
+    }
+    .ensemble-members {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .ensemble-members { grid-template-columns: 1fr; }
+    }
+    .member {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .member strong { font-weight: 600; }
+    .member span { color: rgba(255,255,255,0.6); }
+
+    /* ---- Chain arrow ---- */
+    .chain-arrow {
+      text-align: center;
+      padding: 24px 0;
+      color: rgba(255,255,255,0.3);
+      font-size: 1.5rem;
+    }
+
+    /* ---- Part 3 teaser ---- */
+    .teaser-title {
+      font-size: 2.2rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .teaser-subtitle {
+      font-size: 1.1rem;
+      color: #f5a623;
+      font-weight: 600;
+      font-style: italic;
+    }
+
+    /* ---- Sponsors ---- */
+    #sponsors {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 2;
+      width: 200px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<img id="sponsors" src="img/sponsors.png" alt="Theatre 1308 &amp; Calgary Arts Development">
+<div id="content">
+
+  <!-- ======== HERO ======== -->
+  <div class="hero"><img class="title-img" src="img/title.png" alt="Cadavre Exquis"></div>
+
+  <!-- ======== SERIES INTRO ======== -->
+  <div class="section">
+    <div class="section-label">A Cross-Disciplinary Arts Series</div>
+    <div class="section-body">
+      <p>Theatre 1308 presents <strong>Cadavre Exquis</strong>, a cross-disciplinary arts series curated by composer and violinist Jeremy Gignoux. Inspired by the surrealist collaborative game "exquisite corpse," this series unfolds as a creative chain reaction: each artist responds only to the work created immediately before theirs.</p>
+      <p>Music inspires new visual art. Art inspires new music. And the process continues.</p>
+      <p>Across three events, artists, composers, and ensembles build upon each other's creations. Everything begins with a single musical "seed" created by a mystery composer&mdash;their identity will not be revealed until the final event on May 9, 2026.</p>
+    </div>
+  </div>
+
+  <!-- ======== TIMELINE ======== -->
+  <div class="timeline">
+
+    <!-- ---- Mystery Composer ---- -->
+    <div class="timeline-node">
+      <div class="timeline-dot mystery"></div>
+      <div class="section-label">The Seed</div>
+      <div class="section-title">Mystery Composer</div>
+      <div class="mystery-box">?</div>
+      <div class="section-body">
+        <p>A secret musical recording launches the entire Cadavre Exquis progression. The composer's identity remains hidden until the final event.</p>
+      </div>
+    </div>
+
+    <div class="chain-arrow">&darr;</div>
+
+    <!-- ---- PART 1: REFLECT ---- -->
+    <div class="timeline-node">
+      <div class="timeline-dot"></div>
+      <div class="section-label">Part One</div>
+      <div class="section-title">"Reflect"</div>
+      <div class="section-date">January 17, 2026</div>
+      <div class="section-body">
+        <p>The first event reveals the opening link of the artistic chain. Three visual artists debut new works created in response to the original, secret musical recording. Then, original music inspired by those artworks is performed live and recorded&mdash;becoming the creative spark for Part 2.</p>
+      </div>
+
+      <div class="artist-group-title">Visual Artists</div>
+
+      <div class="artist-card">
+        <h3>La G&uuml;ita</h3>
+        <div class="artist-role">Visual Artist &middot; Storytelling &amp; Muralism</div>
+        <div class="artist-bio">La G&uuml;ita is a Nicaraguan-Canadian artist based in Calgary/Mohkinstsis whose practice is rooted in storytelling. Guided by memory, emotion, and her connection to the natural and spiritual worlds, her work is an ongoing act of remembering&mdash;woven from personal reflections, ancestral teachings, and the stories that cross her path. Using vivid colours, symbolic imagery, and fluid forms, she honours the strength, joy, and sacredness that live within us. Her multidisciplinary practice spans visual art, muralism, and arts facilitation, with murals in Calgary and Michigan through the BUMP Festival, Pleasant Peninsula Mural Festival, and other community initiatives.</div>
+        <a class="artist-link" href="https://www.instagram.com/joseelaguita/" target="_blank">@joseelaguita</a>
+      </div>
+
+      <div class="artist-card">
+        <h3>Wanda Ellerbeck</h3>
+        <div class="artist-role">Visual Artist &middot; Painting, Sculpture &amp; Installation</div>
+        <div class="artist-bio">Born and raised in Alberta, Wanda Ellerbeck's artistic practice has spanned a lifetime, covering painting, drawing, sculpture, and installation. She has taught extensively at post-secondary institutions across Canada and her awards include the prestigious Canada Council for the Arts "B" grant and numerous project grants from the Alberta Foundation for the Arts. She earned her MFA from the Nova Scotia College of Art and Design. Wanda lives, teaches, and works in Canmore, Alberta.</div>
+        <a class="artist-link" href="https://www.wandaellerbeckartist.com/" target="_blank">wandaellerbeckartist.com</a>
+      </div>
+
+      <div class="artist-card">
+        <h3>Terry Gregoraschuk</h3>
+        <div class="artist-role">Visual Artist &middot; Multi-Medium</div>
+        <div class="artist-bio">Terry Gregoraschuk has spent over 45 years exhibiting his work and has developed a reputation for supplying unique art in a variety of mediums and styles. His artwork has been exhibited at the Kennedy Center in Washington, D.C., the National Museum of Natural Sciences in Ottawa, and the Olympic Art Exhibitions in Los Angeles and Calgary. His work is held in the collections of the Alberta Foundation for the Arts, the Medicine Hat Museum, the City of Calgary, and the Esso and Texaco Art Collections.</div>
+        <a class="artist-link" href="https://www.terrygregoraschuk.com/" target="_blank">terrygregoraschuk.com</a>
+      </div>
+
+      <div class="chain-arrow">&darr;</div>
+
+      <div class="artist-group-title">Musicians</div>
+
+      <div class="ensemble-card">
+        <h3>Landscape Modes</h3>
+        <div class="ensemble-bio">A newly formed new-music ensemble bringing together musicians with backgrounds spanning classical music, traditional world musics, jazz, folk, and improvisation. Their original compositions draw on musical traditions from around the globe while using contemporary techniques to place these influences in fresh, unexpected perspectives&mdash;an ideal match for the cross-disciplinary spirit of Cadavre Exquis.</div>
+        <div class="ensemble-members">
+          <div class="member"><strong>Jiajia Li</strong> <span>&middot; Flute</span></div>
+          <div class="member"><strong>Jeremy Gignoux</strong> <span>&middot; Violin</span></div>
+          <div class="member"><strong>C&eacute;dric Blary</strong> <span>&middot; Clarinet</span></div>
+          <div class="member"><strong>Keith Rodger</strong> <span>&middot; Double Bass</span></div>
+          <div class="member"><strong>Afo Fapojuwo</strong> <span>&middot; Drums</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chain-arrow">&darr;</div>
+
+    <!-- ---- PART 2: IMPROVISE ---- -->
+    <div class="timeline-node">
+      <div class="timeline-dot"></div>
+      <div class="section-label">Part Two</div>
+      <div class="section-title">"Improvise"</div>
+      <div class="section-date">February 28, 2026</div>
+      <div class="section-body">
+        <p>The chain reaction continues. Three visual artists present new works created in response to the music recorded during Part 1. Then, an improvised musical performance responds to the new artworks&mdash;recorded and passed forward as the creative catalyst for the final chapter.</p>
+      </div>
+
+      <div class="artist-group-title">Visual Artists</div>
+
+      <div class="artist-card">
+        <h3>Simon Aitchison</h3>
+        <div class="artist-role">Visual Artist &middot; Oil Painting &amp; Abstract Expressionism</div>
+        <div class="artist-bio">Simon Aitchison is a visual artist based in Calgary, inspired by metaphysics, nature, music and dream-like states. His practice is centered on a lifelong passion for oil painting, a medium he has explored since 1998. He co-founded Vanishing Point Art Gallery (2005&ndash;2007) and his work was featured in the Alberta Foundation for the Arts Travelling Exhibition program. His current body of work, the Stone Series, marks a return to his roots&mdash;paintings reflecting deep introspection and contemplative thought combined with the action of painting.</div>
+        <a class="artist-link" href="https://simonaitchison.com" target="_blank">simonaitchison.com</a>
+      </div>
+
+      <div class="artist-card">
+        <h3>Doro Buch</h3>
+        <div class="artist-role">Visual Artist &middot; Oil Painting, Animation &amp; Projection</div>
+        <div class="artist-bio">Doro Buch is a visual artist working with oil painting, animation, projection, and sound. Her work understands the body as a resonant space, where external influences meet inner experience and set things in motion. In her work, form bends toward meaning&mdash;line, contour, colour, and composition follow the theme. Abstraction allows simultaneity: different moments in time, reactions, and emotional states existing side by side, held together rather than resolved.</div>
+        <a class="artist-link" href="https://www.dorobuch.com" target="_blank">dorobuch.com</a>
+      </div>
+
+      <div class="artist-card">
+        <h3>Jared Tailfeathers</h3>
+        <div class="artist-role">Multidisciplinary Artist &middot; Blackfoot &amp; Indigenous Art</div>
+        <div class="artist-bio">Jared Tailfeathers is a multidisciplinary artist, musician, author, curator and inventor. His broad variety of work heavily focuses on narrative, community engagement, blending media, genre, high-concepts, public art, design, and public discussions. Much of his work deals with Blackfoot and Indigenous Treaty 7 Art, history, site protection and acknowledgement, Traditional Methods of Making and cultural sustainability.</div>
+        <a class="artist-link" href="https://www.tailfeathersart.com/" target="_blank">tailfeathersart.com</a>
+      </div>
+
+      <div class="chain-arrow">&darr;</div>
+
+      <div class="artist-group-title">Musicians</div>
+
+      <div class="artist-card">
+        <h3>Jairus Sharif</h3>
+        <div class="artist-role">Experimental Jazz &middot; Saxophone, Synthesizer &amp; Drums</div>
+        <div class="artist-bio">Jairus Sharif is a Canadian experimental jazz musician from Calgary. Starting in music as a hip hop turntablist and DJ, he later played in garage rock and blues bands before discovering avant-garde jazz. After being exposed to the music of South African saxophonist Dudu Pukwana, he bought an alto saxophone and began teaching himself the instrument. His full-length debut <em>Water &amp; Tools</em> (2022) was longlisted for the 2023 Polaris Music Prize. He has toured extensively across Canada, the United States, and Mexico.</div>
+        <a class="artist-link" href="https://q4db.org/" target="_blank">q4db.org</a>
+      </div>
+    </div>
+
+    <div class="chain-arrow">&darr;</div>
+
+    <!-- ---- PART 3: COMING SOON ---- -->
+    <div class="timeline-node">
+      <div class="timeline-dot upcoming"></div>
+      <div class="section-label">Part Three</div>
+      <div class="teaser-title">Coming May 9, 2026</div>
+      <div class="section-body">
+        <p>The final chapter. The mystery composer is revealed. Details to be announced.</p>
+      </div>
+      <div class="teaser-subtitle">Who started it all?</div>
+    </div>
+
+  </div><!-- /timeline -->
+
+</div><!-- /content -->
+<script>
+// ===== CONFIGURATION =====
+const CONFIG = {
+  shapeCount: 3,            // Number of shapes on screen at any time
+  shapeScale: 0.5,          // Scale factor for shape images (1 = original size)
+  minSpeed: 15,             // Minimum shape speed (pixels/sec)
+  maxSpeed: 40,             // Maximum shape speed (pixels/sec)
+  minRotation: 0.1,         // Minimum rotation speed (rad/sec)
+  maxRotation: 0.5,         // Maximum rotation speed (rad/sec)
+  overlapColor: '#df0985',  // Color for overlapping regions
+  parallaxFactor: 0.3,      // Background scrolls at this fraction of page scroll (0 = fixed, 1 = no parallax)
+};
+// =========================
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// ---- Helpers ----
+
+function rand(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function randSign() {
+  return Math.random() < 0.5 ? -1 : 1;
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+
+
+// ---- Resize ----
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---- Scroll tracking ----
+
+let scrollY = 0;
+window.addEventListener('scroll', () => {
+  scrollY = window.scrollY;
+});
+
+// ---- Shape class ----
+
+class Shape {
+  constructor(img, canvasW, canvasH) {
+    this.img = img;
+    this.w = img.width * CONFIG.shapeScale;
+    this.h = img.height * CONFIG.shapeScale;
+    // Diagonal — the radius needed to contain the rotated image
+    this.diagonal = Math.sqrt(this.w * this.w + this.h * this.h);
+    this.halfDiag = this.diagonal / 2;
+
+    // Random rotation
+    this.angle = rand(0, Math.PI * 2);
+    this.rotSpeed = rand(CONFIG.minRotation, CONFIG.maxRotation) * randSign();
+
+    // Random speed
+    const speed = rand(CONFIG.minSpeed, CONFIG.maxSpeed);
+
+    // Pick a random edge to spawn from and a direction aimed inward
+    this._spawnFromEdge(canvasW, canvasH, speed);
+  }
+
+  _spawnFromEdge(cw, ch, speed) {
+    // Choose an edge: 0=top, 1=right, 2=bottom, 3=left
+    const edge = Math.floor(Math.random() * 4);
+    const margin = this.halfDiag;
+
+    // Angle toward interior with some spread (±60°)
+    let baseAngle;
+    switch (edge) {
+      case 0: // top — moving downward
+        this.x = rand(-margin, cw + margin);
+        this.y = -margin;
+        baseAngle = Math.PI / 2; // down
+        break;
+      case 1: // right — moving left
+        this.x = cw + margin;
+        this.y = rand(-margin, ch + margin);
+        baseAngle = Math.PI; // left
+        break;
+      case 2: // bottom — moving up
+        this.x = rand(-margin, cw + margin);
+        this.y = ch + margin;
+        baseAngle = -Math.PI / 2; // up
+        break;
+      case 3: // left — moving right
+        this.x = -margin;
+        this.y = rand(-margin, ch + margin);
+        baseAngle = 0; // right
+        break;
+    }
+
+    // Add spread so shapes don't all go perfectly straight
+    const spread = rand(-Math.PI / 3, Math.PI / 3);
+    const angle = baseAngle + spread;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+  }
+
+  update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.angle += this.rotSpeed * dt;
+  }
+
+  // Check if shape is completely off-screen (with generous margin)
+  isOffScreen(cw, ch) {
+    const margin = this.halfDiag + 20;
+    return (
+      this.x < -margin ||
+      this.x > cw + margin ||
+      this.y < -margin ||
+      this.y > ch + margin
+    );
+  }
+
+  // Axis-aligned bounding box in canvas coordinates (accounts for rotation)
+  getBBox() {
+    return {
+      x: Math.floor(this.x - this.halfDiag),
+      y: Math.floor(this.y - this.halfDiag),
+      size: Math.ceil(this.diagonal),
+    };
+  }
+
+  // Draw the shape (rotated) onto a given context at the shape's position
+  drawTo(targetCtx) {
+    targetCtx.save();
+    targetCtx.translate(this.x, this.y);
+    targetCtx.rotate(this.angle);
+    targetCtx.drawImage(this.img, -this.w / 2, -this.h / 2, this.w, this.h);
+    targetCtx.restore();
+  }
+}
+
+// ---- Main application ----
+
+async function main() {
+  // Load all images
+  const [bgImg, ...shapeImgs] = await Promise.all([
+    loadImage('img/background.png'),
+    loadImage('img/shape-note.png'),
+    loadImage('img/shape-splot.png'),
+    loadImage('img/shape-triangle.png'),
+  ]);
+
+  // Create tiled background pattern
+  let bgPattern = ctx.createPattern(bgImg, 'repeat');
+
+  // Re-create pattern on resize (context can change)
+  window.addEventListener('resize', () => {
+    bgPattern = ctx.createPattern(bgImg, 'repeat');
+  });
+
+  // Offscreen canvas for pairwise overlap compositing
+  const pairCanvas = document.createElement('canvas');
+  const pairCtx = pairCanvas.getContext('2d');
+
+  // Accumulator canvas for all overlap regions
+  const overlapCanvas = document.createElement('canvas');
+  const overlapCtx = overlapCanvas.getContext('2d');
+
+  // Initialize shapes
+  const shapes = [];
+
+  function spawnShape() {
+    const img = shapeImgs[Math.floor(Math.random() * shapeImgs.length)];
+    return new Shape(img, canvas.width, canvas.height);
+  }
+
+  // Populate initial shapes — spread them across the canvas rather than all starting from edges
+  for (let i = 0; i < CONFIG.shapeCount; i++) {
+    const s = spawnShape();
+    // Place initial shapes randomly on-screen (not just at edges)
+    s.x = rand(0, canvas.width);
+    s.y = rand(0, canvas.height);
+    shapes.push(s);
+  }
+
+  // ---- Overlap detection (GPU-accelerated via composite operations) ----
+
+  function boxesOverlap(a, b) {
+    return !(
+      a.x + a.size <= b.x ||
+      b.x + b.size <= a.x ||
+      a.y + a.size <= b.y ||
+      b.y + b.size <= a.y
+    );
+  }
+
+  function computeOverlapMask() {
+    const cw = canvas.width;
+    const ch = canvas.height;
+    overlapCanvas.width = cw;
+    overlapCanvas.height = ch;
+    overlapCtx.clearRect(0, 0, cw, ch);
+
+    const bboxes = shapes.map(s => s.getBBox());
+
+    for (let i = 0; i < shapes.length; i++) {
+      for (let j = i + 1; j < shapes.length; j++) {
+        if (!boxesOverlap(bboxes[i], bboxes[j])) continue;
+
+        // Compute intersection rect to minimize canvas size
+        const bbA = bboxes[i];
+        const bbB = bboxes[j];
+        const ix0 = Math.max(bbA.x, bbB.x);
+        const iy0 = Math.max(bbA.y, bbB.y);
+        const ix1 = Math.min(bbA.x + bbA.size, bbB.x + bbB.size);
+        const iy1 = Math.min(bbA.y + bbA.size, bbB.y + bbB.size);
+        const iw = ix1 - ix0;
+        const ih = iy1 - iy0;
+        if (iw <= 0 || ih <= 0) continue;
+
+        // Size the pair canvas to the intersection region
+        pairCanvas.width = iw;
+        pairCanvas.height = ih;
+        pairCtx.clearRect(0, 0, iw, ih);
+
+        // Draw shape A, offset so intersection region aligns with (0,0)
+        pairCtx.globalCompositeOperation = 'source-over';
+        pairCtx.save();
+        pairCtx.translate(shapes[i].x - ix0, shapes[i].y - iy0);
+        pairCtx.rotate(shapes[i].angle);
+        pairCtx.drawImage(shapes[i].img, -shapes[i].w / 2, -shapes[i].h / 2, shapes[i].w, shapes[i].h);
+        pairCtx.restore();
+
+        // Draw shape B with 'source-in': keeps only pixels where A already exists
+        pairCtx.globalCompositeOperation = 'source-in';
+        pairCtx.save();
+        pairCtx.translate(shapes[j].x - ix0, shapes[j].y - iy0);
+        pairCtx.rotate(shapes[j].angle);
+        pairCtx.drawImage(shapes[j].img, -shapes[j].w / 2, -shapes[j].h / 2, shapes[j].w, shapes[j].h);
+        pairCtx.restore();
+
+        // Colorize the overlap region with the pink color (source-in preserves shape)
+        pairCtx.globalCompositeOperation = 'source-in';
+        pairCtx.fillStyle = CONFIG.overlapColor;
+        pairCtx.fillRect(0, 0, iw, ih);
+
+        // Stamp onto accumulator
+        pairCtx.globalCompositeOperation = 'source-over';
+        overlapCtx.drawImage(pairCanvas, ix0, iy0);
+      }
+    }
+  }
+
+  // ---- Animation loop ----
+
+  let lastTime = performance.now();
+
+  function frame(now) {
+    const dt = (now - lastTime) / 1000; // seconds
+    lastTime = now;
+    const cw = canvas.width;
+    const ch = canvas.height;
+
+    // Update shapes
+    for (const s of shapes) {
+      s.update(dt);
+    }
+
+    // Remove off-screen shapes and spawn replacements
+    for (let i = shapes.length - 1; i >= 0; i--) {
+      if (shapes[i].isOffScreen(cw, ch)) {
+        shapes.splice(i, 1);
+      }
+    }
+    while (shapes.length < CONFIG.shapeCount) {
+      shapes.push(spawnShape());
+    }
+
+    // ---- Render ----
+
+    // 1. Tiled background (with parallax offset)
+    const parallaxOffset = scrollY * CONFIG.parallaxFactor;
+    ctx.save();
+    ctx.translate(0, -parallaxOffset);
+    ctx.fillStyle = bgPattern;
+    ctx.fillRect(-1, 0, cw + 2, ch + parallaxOffset + 1);
+    ctx.restore();
+
+    // 2. Draw all shapes
+    for (const s of shapes) {
+      s.drawTo(ctx);
+    }
+
+    // 3. Compute and draw overlap mask
+    computeOverlapMask();
+    ctx.drawImage(overlapCanvas, 0, 0);
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+}
+
+main().catch(console.error);
+</script>
+</body>
+</html>
