@@ -238,6 +238,7 @@
       z-index: 2;
       width: 200px;
       height: auto;
+      transition: opacity 0.3s ease;
     }
   </style>
 </head>
@@ -438,8 +439,12 @@ resize();
 // ---- Scroll tracking ----
 
 let scrollY = 0;
+const sponsorsImg = document.getElementById('sponsors');
 window.addEventListener('scroll', () => {
   scrollY = window.scrollY;
+  // Fade out sponsors logo as user scrolls down (fully hidden by 200px)
+  const fade = Math.max(1 - scrollY / 200, 0);
+  sponsorsImg.style.opacity = fade;
 });
 
 // ---- Shape class ----
